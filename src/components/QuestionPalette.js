@@ -1,7 +1,8 @@
 /**
- * QuestionPalette component
- * Renders the 5-state NTA JEE Main style question palette, candidate card,
- * and live question status breakdown.
+ * QuestionPalette component matching the attached JEE CBT screenshot
+ * Features candidate profile header, authentic 5-state status legend,
+ * subject header strip, 4-column question grid (showing active section),
+ * collapse handle, and Submit Test button.
  */
 
 export function renderPaletteSidebar(container, {
@@ -10,143 +11,103 @@ export function renderPaletteSidebar(container, {
   currentQuestionId,
   currentSubject,
   candidateProfile,
+  isCollapsed = false,
   onSelectQuestion,
-  onOpenQuestionPaper,
   onSubmitClick,
-  onCloseMobileDrawer
+  onToggleCollapse
 }) {
-  // Count states across the current test
-  const counts = {
-    answered: 0,
-    unanswered: 0,
-    notVisited: 0,
-    marked: 0,
-    ansMarked: 0
+  const subjectTitles = {
+    physics: 'Physics',
+    chemistry: 'Chemistry',
+    mathematics: 'Mathematics'
   };
 
-  questions.forEach(q => {
-    const resp = responses[q.id];
-    const status = resp ? resp.status : 'not_visited';
-    if (status === 'answered') counts.answered++;
-    else if (status === 'unanswered') counts.unanswered++;
-    else if (status === 'marked') counts.marked++;
-    else if (status === 'answered_marked') counts.ansMarked++;
-    else counts.notVisited++;
-  });
+  const currentQ = questions.find(q => q.id === currentQuestionId);
+  const currentSection = currentQ ? currentQ.section : 'A';
 
-  // Filter questions for the active subject
+  // Filter questions for the active subject and active section (matching CBT screenshot: 20 MCQs for Sec A)
   const subjectQuestions = questions.filter(q => q.subject === currentSubject);
-  const sectionAQuestions = subjectQuestions.filter(q => q.section === 'A');
-  const sectionBQuestions = subjectQuestions.filter(q => q.section === 'B');
+  const displayQuestions = subjectQuestions.some(q => q.section === currentSection)
+    ? subjectQuestions.filter(q => q.section === currentSection)
+    : subjectQuestions;
 
   const html = `
-    <!-- Candidate Info Card -->
-    <div class="palette-candidate-card">
-      <div class="palette-candidate-avatar-large">
+    <!-- Collapse/Expand handle on divider border -->
+    <button class="cbt-collapse-toggle-handle" id="cbt-palette-toggle-handle" title="${isCollapsed ? 'Expand Question Palette' : 'Collapse Question Palette'}">
+      ${isCollapsed ? '›' : '‹'}
+    </button>
+
+    <!-- Candidate Profile Row -->
+    <div class="cbt-palette-candidate">
+      <div class="candidate-avatar-icon">
         ${candidateProfile.name.split(' ').pop().charAt(0) || 'C'}
       </div>
-      <div>
-        <div style="font-weight: 700; font-size: 0.9rem; color: #0f172a;">${candidateProfile.name}</div>
-        <div style="font-size: 0.75rem; color: #64748b; font-family: var(--font-mono);">${candidateProfile.rollNumber}</div>
-      </div>
-      ${onCloseMobileDrawer ? `
-        <button id="close-palette-drawer-btn" style="margin-left: auto; font-size: 1.25rem; color: #64748b; padding: 0.25rem;">✕</button>
-      ` : ''}
-    </div>
-
-    <!-- Status Legend Breakdown -->
-    <div class="palette-legend-box">
-      <div class="legend-chip">
-        <span class="q-symbol state-answered">${counts.answered}</span>
-        <span>Answered</span>
-      </div>
-      <div class="legend-chip">
-        <span class="q-symbol state-unanswered">${counts.unanswered}</span>
-        <span>Not Answered</span>
-      </div>
-      <div class="legend-chip">
-        <span class="q-symbol state-not-visited">${counts.notVisited}</span>
-        <span>Not Visited</span>
-      </div>
-      <div class="legend-chip">
-        <span class="q-symbol state-marked">${counts.marked}</span>
-        <span>Marked for Review</span>
-      </div>
-      <div class="legend-chip" style="grid-column: span 2;">
-        <span class="q-symbol state-ans-marked">${counts.ansMarked}</span>
-        <span>Ans & Marked for Review (Evaluated)</span>
+      <div class="candidate-name-text">
+        ${candidateProfile.name.replace('Candidate: ', '')}
       </div>
     </div>
 
-    <!-- Question Palette Grid -->
-    <div class="palette-grid-wrapper">
-      <!-- Section A (MCQs) -->
-      ${sectionAQuestions.length > 0 ? `
-        <div class="palette-section-title">
-          <span>Section A (MCQ)</span>
-          <span style="font-size: 0.7rem; color: #94a3b8;">${sectionAQuestions.length} Questions</span>
+    <!-- Status Legend (2-Column format matching screenshot) -->
+    <div class="cbt-palette-legend">
+      <div class="legend-grid">
+        <div class="legend-item">
+          <span class="cbt-symbol state-answered"></span>
+          <span>Answered</span>
         </div>
-        <div class="palette-btn-grid" style="margin-bottom: 1.25rem;">
-          ${sectionAQuestions.map(q => {
-            const resp = responses[q.id];
-            const status = resp ? resp.status : 'not_visited';
-            const isActive = q.id === currentQuestionId;
-            const overallIndex = questions.findIndex(item => item.id === q.id) + 1;
-            
-            let stateClass = 'state-not-visited';
-            if (status === 'answered') stateClass = 'state-answered';
-            else if (status === 'unanswered') stateClass = 'state-unanswered';
-            else if (status === 'marked') stateClass = 'state-marked';
-            else if (status === 'answered_marked') stateClass = 'state-ans-marked';
+        <div class="legend-item">
+          <span class="cbt-symbol state-unanswered"></span>
+          <span>Not Answered</span>
+        </div>
+        <div class="legend-item">
+          <span class="cbt-symbol state-not-visited"></span>
+          <span>Not Visited</span>
+        </div>
+        <div class="legend-item">
+          <span class="cbt-symbol state-marked"></span>
+          <span>Marked for Review</span>
+        </div>
+      </div>
 
-            return `
-              <button class="palette-q-btn q-symbol ${stateClass} ${isActive ? 'active-q' : ''}" 
-                      data-qid="${q.id}"
-                      title="Q${overallIndex} - ${status.replace('_', ' ')}">
-                ${overallIndex}
-              </button>
-            `;
-          }).join('')}
-        </div>
-      ` : ''}
-
-      <!-- Section B (Numerical) -->
-      ${sectionBQuestions.length > 0 ? `
-        <div class="palette-section-title">
-          <span>Section B (Numerical)</span>
-          <span style="font-size: 0.7rem; color: #94a3b8;">${sectionBQuestions.length} Questions</span>
-        </div>
-        <div class="palette-btn-grid">
-          ${sectionBQuestions.map(q => {
-            const resp = responses[q.id];
-            const status = resp ? resp.status : 'not_visited';
-            const isActive = q.id === currentQuestionId;
-            const overallIndex = questions.findIndex(item => item.id === q.id) + 1;
-            
-            let stateClass = 'state-not-visited';
-            if (status === 'answered') stateClass = 'state-answered';
-            else if (status === 'unanswered') stateClass = 'state-unanswered';
-            else if (status === 'marked') stateClass = 'state-marked';
-            else if (status === 'answered_marked') stateClass = 'state-ans-marked';
-
-            return `
-              <button class="palette-q-btn q-symbol ${stateClass} ${isActive ? 'active-q' : ''}" 
-                      data-qid="${q.id}"
-                      title="Q${overallIndex} - ${status.replace('_', ' ')}">
-                ${overallIndex}
-              </button>
-            `;
-          }).join('')}
-        </div>
-      ` : ''}
+      <div class="legend-item-full">
+        <span class="cbt-symbol state-ans-marked"></span>
+        <span>Answered &amp; Marked for Review (will be considered for evaluation)</span>
+      </div>
     </div>
 
-    <!-- Sidebar Footer Actions -->
-    <div class="palette-sidebar-footer">
-      <button id="sidebar-question-paper-btn" class="btn btn-outline" style="width: 100%;">
-        📄 Question Paper
-      </button>
-      <button id="sidebar-submit-btn" class="btn btn-danger" style="width: 100%; font-weight: 700;">
+    <!-- Blue Subject Header Strip -->
+    <div class="cbt-palette-subject-bar">
+      <span>${subjectTitles[currentSubject] || currentSubject}</span>
+    </div>
+
+    <!-- Question Numbers Grid (4-column layout matching screenshot) -->
+    <div class="cbt-palette-grid-area">
+      <div class="cbt-questions-grid">
+        ${displayQuestions.map(q => {
+          const resp = responses[q.id];
+          const status = resp ? resp.status : 'not_visited';
+          const isActive = q.id === currentQuestionId;
+          const overallIndex = questions.findIndex(item => item.id === q.id) + 1;
+
+          let stateClass = 'state-not-visited';
+          if (status === 'answered') stateClass = 'state-answered';
+          else if (status === 'unanswered') stateClass = 'state-unanswered';
+          else if (status === 'marked') stateClass = 'state-marked';
+          else if (status === 'answered_marked') stateClass = 'state-ans-marked';
+
+          return `
+            <button class="cbt-q-tile cbt-symbol ${stateClass} ${isActive ? 'current-active' : ''}" 
+                    data-qid="${q.id}"
+                    title="Question ${overallIndex} (${q.section === 'A' ? 'MCQ Single' : 'Numeric'}) - ${status.replace('_', ' ')}">
+              ${overallIndex}
+            </button>
+          `;
+        }).join('')}
+      </div>
+    </div>
+
+    <!-- Palette Bottom: Submit Test Button -->
+    <div class="cbt-palette-bottom">
+      <button id="sidebar-submit-btn" class="btn-cbt-submit">
         Submit Test
       </button>
     </div>
@@ -154,8 +115,14 @@ export function renderPaletteSidebar(container, {
 
   container.innerHTML = html;
 
-  // Attach event listeners
-  container.querySelectorAll('.palette-q-btn').forEach(btn => {
+  if (isCollapsed) {
+    container.classList.add('collapsed');
+  } else {
+    container.classList.remove('collapsed');
+  }
+
+  // Event Listeners
+  container.querySelectorAll('.cbt-q-tile').forEach(btn => {
     btn.addEventListener('click', () => {
       const qid = btn.getAttribute('data-qid');
       if (qid && onSelectQuestion) {
@@ -164,18 +131,11 @@ export function renderPaletteSidebar(container, {
     });
   });
 
-  const qPaperBtn = container.querySelector('#sidebar-question-paper-btn');
-  if (qPaperBtn && onOpenQuestionPaper) {
-    qPaperBtn.addEventListener('click', onOpenQuestionPaper);
-  }
+  container.querySelector('#sidebar-submit-btn')?.addEventListener('click', () => {
+    if (onSubmitClick) onSubmitClick();
+  });
 
-  const submitBtn = container.querySelector('#sidebar-submit-btn');
-  if (submitBtn && onSubmitClick) {
-    submitBtn.addEventListener('click', onSubmitClick);
-  }
-
-  const closeDrawerBtn = container.querySelector('#close-palette-drawer-btn');
-  if (closeDrawerBtn && onCloseMobileDrawer) {
-    closeDrawerBtn.addEventListener('click', onCloseMobileDrawer);
-  }
+  container.querySelector('#cbt-palette-toggle-handle')?.addEventListener('click', () => {
+    if (onToggleCollapse) onToggleCollapse();
+  });
 }

@@ -11,6 +11,8 @@ import { renderInstructionsModal } from '../components/InstructionsModal.js';
 export function renderExamView(container, { testId, isResume = false, onSubmitExam }) {
   let examData = null;
   const profile = Storage.getProfile();
+  let fontSizeMultiplier = 1.0;
+  let isPaletteCollapsed = false;
 
   if (isResume) {
     const saved = Storage.getActiveExam();
@@ -20,14 +22,12 @@ export function renderExamView(container, { testId, isResume = false, onSubmitEx
   }
 
   if (!examData) {
-    // Initialize new test session
     const { preset, questions, durationMinutes } = getTestQuestions(testId);
     
-    // Build initial responses map
     const initialResponses = {};
     questions.forEach(q => {
       initialResponses[q.id] = {
-        status: 'not_visited', // 'not_visited' | 'unanswered' | 'answered' | 'marked' | 'answered_marked'
+        status: 'not_visited',
         selectedOption: null,
         numericalAnswer: '',
         timeSpentSeconds: 0
@@ -35,7 +35,7 @@ export function renderExamView(container, { testId, isResume = false, onSubmitEx
     });
 
     const firstQ = questions[0];
-    initialResponses[firstQ.id].status = 'unanswered'; // First question is visited immediately
+    initialResponses[firstQ.id].status = 'unanswered';
 
     examData = {
       testId: preset.id,
@@ -53,17 +53,16 @@ export function renderExamView(container, { testId, isResume = false, onSubmitEx
     Storage.saveActiveExam(examData);
   }
 
-  // Setup DOM container structure
+  // CBT Exam Viewport DOM structure
   container.innerHTML = `
-    <div class="exam-viewport">
+    <div class="cbt-exam-wrapper">
       <div id="cbt-header-mount"></div>
       
-      <div class="cbt-main-split">
-        <main class="cbt-question-panel" id="cbt-question-mount"></main>
-        <aside class="cbt-palette-sidebar" id="cbt-palette-mount"></aside>
+      <div class="cbt-body-split">
+        <main class="cbt-question-container" id="cbt-question-mount"></main>
+        <aside class="cbt-palette-column" id="cbt-palette-mount"></aside>
       </div>
 
-      <!-- Modals mount point -->
       <div id="cbt-modals-mount"></div>
     </div>
   `;
@@ -74,30 +73,22 @@ export function renderExamView(container, { testId, isResume = false, onSubmitEx
   const modalsMount = container.querySelector('#cbt-modals-mount');
 
   let timerInterval = null;
-  let timerWarningPlayed = false;
 
-  // Formatting helper for MM:SS or HH:MM:SS
   const formatTime = (secs) => {
     const hours = Math.floor(secs / 3600);
     const minutes = Math.floor((secs % 3600) / 60);
     const seconds = secs % 60;
-    if (hours > 0) {
-      return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-    }
-    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   };
 
-  // Helper to persist current state
   const saveCurrentState = () => {
     Storage.saveActiveExam(examData);
   };
 
-  // Switch active question
   const navigateToQuestion = (qId) => {
     const targetQ = examData.questions.find(q => q.id === qId);
     if (!targetQ) return;
 
-    // Track response status transition: if not_visited, becomes unanswered
     if (examData.responses[targetQ.id].status === 'not_visited') {
       examData.responses[targetQ.id].status = 'unanswered';
     }
@@ -108,10 +99,9 @@ export function renderExamView(container, { testId, isResume = false, onSubmitEx
     renderAll();
 
     // Close mobile drawer if open
-    paletteMount.classList.remove('open');
+    paletteMount.classList.remove('mobile-open');
   };
 
-  // Next / Previous helpers
   const goNext = () => {
     const currentIndex = examData.questions.findIndex(q => q.id === examData.currentQuestionId);
     if (currentIndex < examData.questions.length - 1) {
@@ -119,14 +109,14 @@ export function renderExamView(container, { testId, isResume = false, onSubmitEx
     }
   };
 
-  const goPrevious = () => {
-    const currentIndex = examData.questions.findIndex(q => q.id === examData.currentQuestionId);
-    if (currentIndex > 0) {
-      navigateToQuestion(examData.questions[currentIndex - 1].id);
+  // Switch between Section A (MCQ Single) and Section B (Numeric)
+  const handleSelectSection = (sectionLetter) => {
+    const targetQ = examData.questions.find(q => q.subject === examData.currentSubject && q.section === sectionLetter);
+    if (targetQ) {
+      navigateToQuestion(targetQ.id);
     }
   };
 
-  // Action handlers
   const handleSelectOption = (optIdx) => {
     const qId = examData.currentQuestionId;
     examData.responses[qId].selectedOption = optIdx;
@@ -158,24 +148,6 @@ export function renderExamView(container, { testId, isResume = false, onSubmitEx
     goNext();
   };
 
-  const handleSaveAndMark = () => {
-    const qId = examData.currentQuestionId;
-    const resp = examData.responses[qId];
-    const q = examData.questions.find(item => item.id === qId);
-
-    const hasAnswer = (q.type === 'mcq' && resp.selectedOption !== null) ||
-                      (q.type === 'numerical' && resp.numericalAnswer && resp.numericalAnswer.trim() !== '');
-
-    if (hasAnswer) {
-      resp.status = 'answered_marked'; // Evaluated!
-    } else {
-      resp.status = 'marked';
-    }
-
-    saveCurrentState();
-    goNext();
-  };
-
   const handleClearResponse = () => {
     const qId = examData.currentQuestionId;
     const resp = examData.responses[qId];
@@ -195,7 +167,7 @@ export function renderExamView(container, { testId, isResume = false, onSubmitEx
                       (q.type === 'numerical' && resp.numericalAnswer && resp.numericalAnswer.trim() !== '');
 
     if (hasAnswer) {
-      resp.status = 'answered_marked';
+      resp.status = 'answered_marked'; // Evaluated!
     } else {
       resp.status = 'marked';
     }
@@ -204,11 +176,9 @@ export function renderExamView(container, { testId, isResume = false, onSubmitEx
     goNext();
   };
 
-  // Subject tab click
   const handleSelectSubject = (subject) => {
     if (subject === examData.currentSubject) return;
     examData.currentSubject = subject;
-    // Find first question of this subject
     const firstSubjectQ = examData.questions.find(q => q.subject === subject);
     if (firstSubjectQ) {
       navigateToQuestion(firstSubjectQ.id);
@@ -218,7 +188,6 @@ export function renderExamView(container, { testId, isResume = false, onSubmitEx
     }
   };
 
-  // Modals
   const openQuestionPaper = () => {
     renderQuestionPaperModal(modalsMount, {
       questions: examData.questions,
@@ -232,7 +201,6 @@ export function renderExamView(container, { testId, isResume = false, onSubmitEx
     });
   };
 
-  // Submit test confirmation and result calculation
   const openSubmitConfirmation = () => {
     renderSubmitModal(modalsMount, {
       questions: examData.questions,
@@ -246,7 +214,6 @@ export function renderExamView(container, { testId, isResume = false, onSubmitEx
   const finalizeSubmission = () => {
     clearInterval(timerInterval);
 
-    // Calculate score, accuracy, and subject breakdowns
     let totalScore = 0;
     let maxScore = examData.questions.length * 4;
     let correctCount = 0;
@@ -277,7 +244,6 @@ export function renderExamView(container, { testId, isResume = false, onSubmitEx
       let isCorrect = false;
       let marksAwarded = 0;
 
-      // Evaluation eligibility: Answered OR Answered & Marked for Review
       const isEligible = resp.status === 'answered' || resp.status === 'answered_marked';
 
       if (q.type === 'mcq') {
@@ -292,7 +258,6 @@ export function renderExamView(container, { testId, isResume = false, onSubmitEx
           }
         }
       } else {
-        // Numerical Question
         if (resp.numericalAnswer && resp.numericalAnswer.trim() !== '' && isEligible) {
           isAttempted = true;
           const userNum = parseFloat(resp.numericalAnswer.trim());
@@ -347,7 +312,6 @@ export function renderExamView(container, { testId, isResume = false, onSubmitEx
       };
     });
 
-    // Compute accuracies
     const totalAttempted = correctCount + incorrectCount;
     const overallAccuracy = totalAttempted > 0 ? Math.round((correctCount / totalAttempted) * 100) : 0;
 
@@ -375,7 +339,6 @@ export function renderExamView(container, { testId, isResume = false, onSubmitEx
       questions: questionResults
     };
 
-    Feedback.playCompletion();
     Storage.saveCompletedTest(attemptResult);
 
     if (onSubmitExam) {
@@ -383,23 +346,17 @@ export function renderExamView(container, { testId, isResume = false, onSubmitEx
     }
   };
 
-  // Render methods
   const renderHeaderOnly = () => {
-    const isWarning = examData.timeRemaining <= 600; // < 10 minutes
     renderExamHeader(headerMount, {
       testTitle: examData.testTitle,
       timeRemainingFormatted: formatTime(examData.timeRemaining),
-      isTimerWarning: isWarning,
-      candidateProfile: profile,
       subjects: examData.subjects,
       currentSubject: examData.currentSubject,
-      questions: examData.questions,
-      responses: examData.responses,
       onSelectSubject: handleSelectSubject,
       onOpenQuestionPaper: openQuestionPaper,
       onOpenInstructions: openInstructions,
       onToggleMobilePalette: () => {
-        paletteMount.classList.toggle('open');
+        paletteMount.classList.toggle('mobile-open');
       }
     });
   };
@@ -411,16 +368,18 @@ export function renderExamView(container, { testId, isResume = false, onSubmitEx
     renderQuestionView(questionMount, {
       question: currentQ,
       questionNumber: qIndex,
-      totalQuestions: examData.questions.length,
       currentResponse: examData.responses[currentQ.id],
+      fontSizeMultiplier,
+      onSelectSection: handleSelectSection,
       onSaveAndNext: handleSaveAndNext,
-      onSaveAndMark: handleSaveAndMark,
       onClearResponse: handleClearResponse,
       onMarkForReviewAndNext: handleMarkForReviewAndNext,
-      onPrevious: goPrevious,
-      onNext: goNext,
       onSelectOption: handleSelectOption,
-      onChangeNumerical: handleChangeNumerical
+      onChangeNumerical: handleChangeNumerical,
+      onChangeFontSize: (newSize) => {
+        fontSizeMultiplier = newSize;
+        renderQuestionOnly();
+      }
     });
   };
 
@@ -431,11 +390,12 @@ export function renderExamView(container, { testId, isResume = false, onSubmitEx
       currentQuestionId: examData.currentQuestionId,
       currentSubject: examData.currentSubject,
       candidateProfile: profile,
+      isCollapsed: isPaletteCollapsed,
       onSelectQuestion: navigateToQuestion,
-      onOpenQuestionPaper: openQuestionPaper,
       onSubmitClick: openSubmitConfirmation,
-      onCloseMobileDrawer: () => {
-        paletteMount.classList.remove('open');
+      onToggleCollapse: () => {
+        isPaletteCollapsed = !isPaletteCollapsed;
+        renderPaletteOnly();
       }
     });
   };
@@ -446,7 +406,7 @@ export function renderExamView(container, { testId, isResume = false, onSubmitEx
     renderPaletteOnly();
   };
 
-  // Start live countdown timer
+  // Timer interval
   timerInterval = setInterval(() => {
     if (examData.timeRemaining > 0) {
       examData.timeRemaining--;
@@ -454,32 +414,20 @@ export function renderExamView(container, { testId, isResume = false, onSubmitEx
       if (timerDisplay) {
         timerDisplay.textContent = formatTime(examData.timeRemaining);
       }
-
-      // Check warning sound at 10 minutes
-      if (examData.timeRemaining === 600 && !timerWarningPlayed) {
-        timerWarningPlayed = true;
-        Feedback.playTimerWarning();
-        renderHeaderOnly();
-      }
-
-      // Periodically auto-save every 10 seconds
       if (examData.timeRemaining % 10 === 0) {
         saveCurrentState();
       }
     } else {
-      // Auto-submit when time expires
       clearInterval(timerInterval);
-      alert('Time is up! Your exam answers are now being submitted automatically.');
+      alert('Time is up! Submitting your test final.');
       finalizeSubmission();
     }
   }, 1000);
 
   // Keyboard navigation shortcuts
   const keyHandler = (e) => {
-    // Only handle if no modal is open
     if (modalsMount.innerHTML.trim() !== '') return;
 
-    // Check if focused in numerical input
     if (document.activeElement && document.activeElement.id === 'numerical-input-box') {
       if (e.key === 'Enter') {
         e.preventDefault();
@@ -498,15 +446,8 @@ export function renderExamView(container, { testId, isResume = false, onSubmitEx
       } else if (e.key.toLowerCase() === 'c') {
         e.preventDefault();
         handleClearResponse();
-      } else if (e.key.toLowerCase() === 'p') {
-        e.preventDefault();
-        goPrevious();
-      } else if (e.key.toLowerCase() === 'n') {
-        e.preventDefault();
-        goNext();
       }
     } else {
-      // Numbers 1, 2, 3, 4 to select MCQ options
       const currentQ = examData.questions.find(q => q.id === examData.currentQuestionId);
       if (currentQ && currentQ.type === 'mcq') {
         if (['1', '2', '3', '4'].includes(e.key)) {
@@ -518,10 +459,8 @@ export function renderExamView(container, { testId, isResume = false, onSubmitEx
 
   window.addEventListener('keydown', keyHandler);
 
-  // Initial render
   renderAll();
 
-  // Return teardown function if route changes
   return () => {
     clearInterval(timerInterval);
     window.removeEventListener('keydown', keyHandler);

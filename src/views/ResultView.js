@@ -2,25 +2,23 @@ import { renderMathInText } from '../utils/mathRenderer.js';
 import { Storage } from '../utils/storage.js';
 
 /**
- * ResultView
- * Comprehensive score report, subject performance analytics, and question-by-question review with solutions.
+ * Clean, minimal ResultView
+ * Accurate scorecard, subject performance, and question-by-question review with KaTeX solutions.
  */
 export function renderResultView(container, { attemptId, onRetakeTest, onBackToDashboard }) {
   const result = Storage.getCompletedTestById(attemptId) || Storage.getCompletedTests()[0];
 
   if (!result) {
     container.innerHTML = `
-      <div class="container" style="text-align: center; padding: 4rem 1rem;">
-        <h2>No Test Result Found</h2>
-        <p style="color: #64748b; margin: 1rem 0;">We could not locate this test attempt report.</p>
-        <button class="btn btn-primary" id="err-back-dash-btn">Return to Dashboard</button>
+      <div style="text-align: center; padding: 40px 16px;">
+        <h3>No Test Result Found</h3>
+        <button class="btn-cbt-primary" id="err-back-dash-btn" style="margin-top: 12px;">Return to Dashboard</button>
       </div>
     `;
     container.querySelector('#err-back-dash-btn')?.addEventListener('click', onBackToDashboard);
     return;
   }
 
-  // Calculate estimated percentile based on normalized JEE score curve
   const calcPercentile = (score, max) => {
     if (max === 0) return '0.00';
     const pct = (score / max) * 100;
@@ -35,11 +33,9 @@ export function renderResultView(container, { attemptId, onRetakeTest, onBackToD
   const estPercentile = calcPercentile(result.totalScore, result.maxScore);
   const timeTakenMins = Math.floor(result.timeTakenSeconds / 60);
   const timeTakenSecs = result.timeTakenSeconds % 60;
-  const totalAttempted = result.correctCount + result.incorrectCount;
 
-  // Active filter state
-  let statusFilter = 'all'; // 'all' | 'correct' | 'incorrect' | 'unanswered'
-  let subjectFilter = 'all'; // 'all' | 'physics' | 'chemistry' | 'mathematics'
+  let statusFilter = 'all';
+  let subjectFilter = 'all';
 
   const subjectTitles = {
     physics: 'Physics',
@@ -49,209 +45,143 @@ export function renderResultView(container, { attemptId, onRetakeTest, onBackToD
 
   const renderContent = () => {
     const html = `
-      <!-- Top Navigation -->
-      <header class="dashboard-nav">
-        <div class="container nav-content">
-          <a href="#dashboard" class="brand-wrapper">
-            <img src="/icons/icon-192.png" alt="JEEReady" class="brand-logo-img" />
-            <div class="brand-text-group">
-              <span class="brand-title">JEEReady</span>
-              <span class="brand-subtitle">Performance Analytics</span>
-            </div>
-          </a>
-          <div style="display: flex; gap: 0.75rem;">
-            <button id="res-print-btn" class="btn btn-sm btn-outline" style="color: #cbd5e1; border-color: #334155;">
-              🖨️ Print Report
-            </button>
-            <button id="res-back-btn" class="btn btn-sm btn-primary">
-              &laquo; Dashboard
-            </button>
-          </div>
+      <!-- Top Bar -->
+      <header class="cbt-top-header">
+        <div class="cbt-top-title">
+          <span>JEEReady - Performance Report</span>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button id="res-print-btn" class="cbt-top-link-btn">
+            Print Report
+          </button>
+          <button id="res-back-btn" class="cbt-top-link-btn" style="color: #38bdf8;">
+            Back to Dashboard
+          </button>
         </div>
       </header>
 
-      <main class="container result-container">
-        <!-- Hero Summary Card -->
-        <div class="result-hero-card">
-          <div class="result-header-row">
+      <main class="results-panel">
+        <!-- Hero Box -->
+        <div class="results-hero-box">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
             <div>
-              <span class="badge badge-info" style="margin-bottom: 0.5rem;">CBT PRACTICE ATTEMPT SCORECARD</span>
-              <h1 style="font-size: 1.85rem; font-weight: 800; color: #ffffff;">${result.testTitle}</h1>
-              <div style="font-size: 0.85rem; color: #cbd5e1; margin-top: 0.25rem;">
-                Completed on ${new Date(result.completedAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
+              <h1 style="font-size: 18px; font-weight: 700; color: #111827;">${result.testTitle}</h1>
+              <div style="font-size: 12px; color: #64748b; margin-top: 2px;">
+                Attempted on ${new Date(result.completedAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
               </div>
             </div>
 
-            <div style="display: flex; gap: 0.75rem;">
-              <button id="res-retake-btn" class="btn btn-secondary">
-                🔄 Retake Test
+            <div>
+              <button id="res-retake-btn" class="btn-cbt-default" style="font-size: 12px; padding: 4px 10px;">
+                Retake Test
               </button>
             </div>
           </div>
 
-          <!-- Main Metric Cards -->
-          <div class="result-main-stats-grid">
-            <div class="result-stat-card">
-              <div class="result-stat-val score-val">${result.totalScore} <span style="font-size: 1.1rem; color: #cbd5e1;">/ ${result.maxScore}</span></div>
-              <div class="result-stat-lbl">Total Score</div>
+          <!-- Score Metrics Grid -->
+          <div class="results-score-grid">
+            <div class="score-box">
+              <div class="score-num">${result.totalScore} <span style="font-size: 13px; color: #64748b; font-weight: 500;">/ ${result.maxScore}</span></div>
+              <div class="score-lbl">Total Score</div>
             </div>
 
-            <div class="result-stat-card">
-              <div class="result-stat-val accuracy-val">${result.accuracy}%</div>
-              <div class="result-stat-lbl">Accuracy Rate</div>
+            <div class="score-box">
+              <div class="score-num" style="color: #2e7d32;">${result.accuracy}%</div>
+              <div class="score-lbl">Accuracy</div>
             </div>
 
-            <div class="result-stat-card">
-              <div class="result-stat-val" style="color: #a78bfa;">~${estPercentile}%ile</div>
-              <div class="result-stat-lbl">Estimated Percentile</div>
+            <div class="score-box">
+              <div class="score-num" style="color: #0288d1;">${estPercentile}</div>
+              <div class="score-lbl">Estimated Percentile</div>
             </div>
 
-            <div class="result-stat-card">
-              <div class="result-stat-val" style="font-size: 1.75rem; color: #fde047;">${timeTakenMins}m ${timeTakenSecs}s</div>
-              <div class="result-stat-lbl">Time Taken</div>
-            </div>
-          </div>
-
-          <!-- Mini Stats Row -->
-          <div style="display: flex; justify-content: center; gap: 2rem; margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid rgba(255, 255, 255, 0.15); flex-wrap: wrap; font-size: 0.875rem;">
-            <div>✅ <strong>${result.correctCount}</strong> Correct (+${result.correctCount * 4} Marks)</div>
-            <div>❌ <strong>${result.incorrectCount}</strong> Incorrect (-${result.incorrectCount} Marks)</div>
-            <div>⚪ <strong>${result.unansweredCount}</strong> Unanswered (0 Marks)</div>
-            <div>🎯 <strong>${totalAttempted}</strong> of ${result.questions.length} Attempted</div>
-          </div>
-        </div>
-
-        <!-- Subject Breakdown Cards -->
-        <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem; color: var(--text-main);">
-          Subject-wise Performance Breakdown
-        </h2>
-
-        <div class="subject-score-cards-grid">
-          ${Object.keys(result.subjectBreakdown).map(sub => {
-            const data = result.subjectBreakdown[sub];
-            return `
-              <div class="subject-perf-card">
-                <div class="subject-perf-header">
-                  <div class="subject-perf-title">${subjectTitles[sub] || sub}</div>
-                  <div class="perf-score-badge">${data.score} / ${data.maxScore}</div>
-                </div>
-
-                <div style="margin-bottom: 0.75rem;">
-                  <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 0.35rem; color: var(--text-muted);">
-                    <span>Accuracy</span>
-                    <strong style="color: var(--text-main);">${data.accuracy}%</strong>
-                  </div>
-                  <div style="width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden;">
-                    <div style="width: ${data.accuracy}%; height: 100%; background: ${data.accuracy >= 70 ? '#22c55e' : data.accuracy >= 40 ? '#f59e0b' : '#ef4444'}; border-radius: 4px;"></div>
-                  </div>
-                </div>
-
-                <div class="perf-breakdown-row">
-                  <div>
-                    <div class="perf-mini-val" style="color: #16a34a;">${data.correct}</div>
-                    <div class="perf-mini-stat">Correct</div>
-                  </div>
-                  <div>
-                    <div class="perf-mini-val" style="color: #dc2626;">${data.incorrect}</div>
-                    <div class="perf-mini-stat">Incorrect</div>
-                  </div>
-                  <div>
-                    <div class="perf-mini-val" style="color: #64748b;">${data.unanswered}</div>
-                    <div class="perf-mini-stat">Unanswered</div>
-                  </div>
-                </div>
-              </div>
-            `;
-          }).join('')}
-        </div>
-
-        <!-- Question Performance Matrix -->
-        <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 2rem;">
-          <div style="font-weight: 700; font-size: 0.95rem; margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
-            <span>Question Response Matrix</span>
-            <div style="display: flex; gap: 1rem; font-size: 0.75rem; color: #64748b;">
-              <span style="display: flex; align-items: center; gap: 0.25rem;">
-                <span style="width: 12px; height: 12px; background: #22c55e; border-radius: 2px;"></span> Correct
-              </span>
-              <span style="display: flex; align-items: center; gap: 0.25rem;">
-                <span style="width: 12px; height: 12px; background: #ef4444; border-radius: 2px;"></span> Incorrect
-              </span>
-              <span style="display: flex; align-items: center; gap: 0.25rem;">
-                <span style="width: 12px; height: 12px; background: #cbd5e1; border-radius: 2px;"></span> Unanswered
-              </span>
+            <div class="score-box">
+              <div class="score-num" style="font-size: 1.3rem;">${timeTakenMins}m ${timeTakenSecs}s</div>
+              <div class="score-lbl">Time Taken</div>
             </div>
           </div>
 
-          <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
-            ${result.questions.map(q => {
-              let bg = '#cbd5e1';
-              let color = '#334155';
-              if (q.isAttempted) {
-                if (q.isCorrect) {
-                  bg = '#22c55e';
-                  color = '#ffffff';
-                } else {
-                  bg = '#ef4444';
-                  color = '#ffffff';
-                }
-              }
-              return `
-                <a href="#q-review-${q.questionNumber}" 
-                   style="width: 32px; height: 32px; border-radius: 4px; background: ${bg}; color: ${color}; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; text-decoration: none;">
-                  ${q.questionNumber}
-                </a>
-              `;
-            }).join('')}
+          <div style="display: flex; gap: 16px; margin-top: 14px; padding-top: 10px; border-top: 1px dashed var(--cbt-border-light); font-size: 12px; color: #475569; flex-wrap: wrap;">
+            <span>Correct: <strong>${result.correctCount}</strong> (+${result.correctCount * 4} Marks)</span>
+            <span>Incorrect: <strong>${result.incorrectCount}</strong> (-${result.incorrectCount} Marks)</span>
+            <span>Unanswered: <strong>${result.unansweredCount}</strong></span>
+            <span>Attempted: <strong>${result.correctCount + result.incorrectCount}</strong> of ${result.questions.length}</span>
           </div>
         </div>
 
-        <!-- Filterable Question-by-Question Review -->
-        <div class="review-section">
-          <div class="review-filter-bar">
-            <div>
-              <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--text-main);">
-                Question-by-Question Detailed Solutions
-              </h2>
-              <div style="font-size: 0.8rem; color: var(--text-muted);">
-                Review every question with step-by-step mathematical & chemical explanations
-              </div>
-            </div>
+        <!-- Subject Breakdown Table -->
+        <div style="margin-bottom: 20px;">
+          <h2 style="font-size: 14px; font-weight: 700; margin-bottom: 8px; color: #111827;">Subject-wise Breakdown</h2>
+          <table class="cbt-summary-table">
+            <thead>
+              <tr>
+                <th>Subject</th>
+                <th>Score</th>
+                <th>Correct</th>
+                <th>Incorrect</th>
+                <th>Unanswered</th>
+                <th>Accuracy</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${Object.keys(result.subjectBreakdown).map(sub => {
+                const data = result.subjectBreakdown[sub];
+                return `
+                  <tr>
+                    <td>${subjectTitles[sub] || sub}</td>
+                    <td style="font-weight: 700; color: var(--cbt-blue-primary);">${data.score} / ${data.maxScore}</td>
+                    <td style="color: #2e7d32; font-weight: 600;">${data.correct}</td>
+                    <td style="color: #c62828; font-weight: 600;">${data.incorrect}</td>
+                    <td style="color: #6c757d;">${data.unanswered}</td>
+                    <td><strong>${data.accuracy}%</strong></td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
 
-            <!-- Filter Buttons -->
-            <div class="filter-btn-group">
-              <button class="filter-btn status-filter ${statusFilter === 'all' ? 'active' : ''}" data-status="all">
+        <!-- Filterable Question Review -->
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+            <h2 style="font-size: 14px; font-weight: 700; color: #111827;">
+              Question-by-Question Solutions
+            </h2>
+
+            <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+              <button class="btn-cbt-default status-filter ${statusFilter === 'all' ? 'btn-cbt-primary' : ''}" data-status="all" style="font-size: 11px; padding: 3px 8px;">
                 All (${result.questions.length})
               </button>
-              <button class="filter-btn status-filter ${statusFilter === 'correct' ? 'active' : ''}" data-status="correct">
+              <button class="btn-cbt-default status-filter ${statusFilter === 'correct' ? 'btn-cbt-primary' : ''}" data-status="correct" style="font-size: 11px; padding: 3px 8px;">
                 Correct (${result.correctCount})
               </button>
-              <button class="filter-btn status-filter ${statusFilter === 'incorrect' ? 'active' : ''}" data-status="incorrect">
+              <button class="btn-cbt-default status-filter ${statusFilter === 'incorrect' ? 'btn-cbt-primary' : ''}" data-status="incorrect" style="font-size: 11px; padding: 3px 8px;">
                 Incorrect (${result.incorrectCount})
               </button>
-              <button class="filter-btn status-filter ${statusFilter === 'unanswered' ? 'active' : ''}" data-status="unanswered">
+              <button class="btn-cbt-default status-filter ${statusFilter === 'unanswered' ? 'btn-cbt-primary' : ''}" data-status="unanswered" style="font-size: 11px; padding: 3px 8px;">
                 Unanswered (${result.unansweredCount})
               </button>
             </div>
           </div>
 
-          <!-- Subject Sub-Filter Tabs -->
-          <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; overflow-x: auto;">
-            <button class="filter-btn subject-filter ${subjectFilter === 'all' ? 'active' : ''}" data-subject="all">
+          <!-- Subject sub-filters -->
+          <div style="display: flex; gap: 4px; margin-bottom: 14px;">
+            <button class="btn-cbt-default subject-filter ${subjectFilter === 'all' ? 'btn-cbt-primary' : ''}" data-subject="all" style="font-size: 11px; padding: 2px 7px;">
               All Subjects
             </button>
-            <button class="filter-btn subject-filter ${subjectFilter === 'physics' ? 'active' : ''}" data-subject="physics">
+            <button class="btn-cbt-default subject-filter ${subjectFilter === 'physics' ? 'btn-cbt-primary' : ''}" data-subject="physics" style="font-size: 11px; padding: 2px 7px;">
               Physics
             </button>
-            <button class="filter-btn subject-filter ${subjectFilter === 'chemistry' ? 'active' : ''}" data-subject="chemistry">
+            <button class="btn-cbt-default subject-filter ${subjectFilter === 'chemistry' ? 'btn-cbt-primary' : ''}" data-subject="chemistry" style="font-size: 11px; padding: 2px 7px;">
               Chemistry
             </button>
-            <button class="filter-btn subject-filter ${subjectFilter === 'mathematics' ? 'active' : ''}" data-subject="mathematics">
+            <button class="btn-cbt-default subject-filter ${subjectFilter === 'mathematics' ? 'btn-cbt-primary' : ''}" data-subject="mathematics" style="font-size: 11px; padding: 2px 7px;">
               Mathematics
             </button>
           </div>
 
-          <!-- Filtered Questions List -->
-          <div id="questions-review-list">
+          <!-- Question Cards -->
+          <div>
             ${(() => {
               const filtered = result.questions.filter(q => {
                 if (subjectFilter !== 'all' && q.subject !== subjectFilter) return false;
@@ -262,70 +192,66 @@ export function renderResultView(container, { attemptId, onRetakeTest, onBackToD
               });
 
               if (filtered.length === 0) {
-                return `
-                  <div style="text-align: center; padding: 3rem; color: var(--text-muted);">
-                    No questions found matching the selected filters.
-                  </div>
-                `;
+                return '<div style="text-align: center; padding: 24px; color: #6c757d;">No questions match the selected filter.</div>';
               }
 
               return filtered.map(q => {
                 const isMcq = q.type === 'mcq';
-                let statusLabel = 'Unanswered (0 Marks)';
-                let statusClass = 'status-unanswered';
+                let statusText = 'Unanswered (0 Marks)';
+                let statusColor = '#6c757d';
                 if (q.isAttempted) {
                   if (q.isCorrect) {
-                    statusLabel = 'Correct (+4 Marks)';
-                    statusClass = 'status-correct';
+                    statusText = 'Correct (+4 Marks)';
+                    statusColor = '#2e7d32';
                   } else {
-                    statusLabel = 'Incorrect (-1 Mark)';
-                    statusClass = 'status-incorrect';
+                    statusText = 'Incorrect (-1 Mark)';
+                    statusColor = '#c62828';
                   }
                 }
 
                 return `
-                  <div class="review-question-card" id="q-review-${q.questionNumber}">
-                    <div class="review-q-header">
+                  <div class="review-item-card" id="q-review-${q.questionNumber}">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px solid var(--cbt-border-light); padding-bottom: 6px;">
                       <div>
-                        <strong>Q.${q.questionNumber}</strong> &bull; 
-                        <span style="color: var(--text-muted); font-size: 0.85rem;">
-                          ${q.subject.toUpperCase()} &bull; Section ${q.section} &bull; ${q.topic || ''}
+                        <strong>Q.${q.questionNumber}</strong> | 
+                        <span style="color: #6c757d; font-size: 12px;">
+                          ${q.subject.toUpperCase()} &bull; Section ${q.section} (${isMcq ? 'MCQ Single' : 'Numeric'}) &bull; ${q.topic || ''}
                         </span>
                       </div>
-                      <div class="review-q-status ${statusClass}">
-                        ${q.isCorrect ? '✓' : q.isAttempted ? '✗' : '⚪'} ${statusLabel}
+                      <div style="font-weight: 700; font-size: 12px; color: ${statusColor};">
+                        ${statusText}
                       </div>
                     </div>
 
-                    <div style="font-size: 1rem; line-height: 1.7; margin-bottom: 1rem; color: #1e293b;">
+                    <div style="font-size: 13px; line-height: 1.6; margin-bottom: 10px;">
                       ${renderMathInText(q.questionText)}
                     </div>
 
                     ${isMcq ? `
-                      <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem;">
+                      <div style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px;">
                         ${q.options.map((opt, oIdx) => {
                           const isCorrectOpt = oIdx === q.correctAnswer;
                           const isUserOpt = oIdx === q.userResponse;
-                          let border = '#e2e8f0';
                           let bg = '#ffffff';
+                          let border = '#e5e7eb';
                           let tag = '';
 
                           if (isCorrectOpt) {
-                            border = '#22c55e';
                             bg = '#f0fdf4';
-                            tag = '<span style="color: #16a34a; font-weight: 700; margin-left: auto;">[Correct Answer]</span>';
+                            border = '#86efac';
+                            tag = '<span style="color: #2e7d32; font-weight: 700; margin-left: auto; font-size: 11px;">[Correct Answer]</span>';
                           }
                           if (isUserOpt && !isCorrectOpt) {
-                            border = '#ef4444';
                             bg = '#fef2f2';
-                            tag = '<span style="color: #dc2626; font-weight: 700; margin-left: auto;">[Your Choice - Incorrect]</span>';
+                            border = '#fca5a5';
+                            tag = '<span style="color: #c62828; font-weight: 700; margin-left: auto; font-size: 11px;">[Your Choice - Incorrect]</span>';
                           } else if (isUserOpt && isCorrectOpt) {
-                            tag = '<span style="color: #16a34a; font-weight: 700; margin-left: auto;">[Your Choice - Correct]</span>';
+                            tag = '<span style="color: #2e7d32; font-weight: 700; margin-left: auto; font-size: 11px;">[Your Choice - Correct]</span>';
                           }
 
                           return `
-                            <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 1rem; border: 2px solid ${border}; border-radius: 6px; background: ${bg}; font-size: 0.95rem;">
-                              <strong style="color: #64748b;">(${String.fromCharCode(65 + oIdx)})</strong>
+                            <div style="display: flex; align-items: center; gap: 8px; padding: 5px 10px; border: 1px solid ${border}; border-radius: 2px; background: ${bg}; font-size: 13px;">
+                              <strong style="color: #6b7280; font-size: 12px;">(${String.fromCharCode(65 + oIdx)})</strong>
                               <div>${renderMathInText(opt)}</div>
                               ${tag}
                             </div>
@@ -333,30 +259,24 @@ export function renderResultView(container, { attemptId, onRetakeTest, onBackToD
                         }).join('')}
                       </div>
                     ` : `
-                      <div class="review-answer-comparison">
+                      <div style="background: #f8fafc; border: 1px solid var(--cbt-border); padding: 8px 12px; font-size: 12px; margin-bottom: 10px; display: flex; justify-content: space-between;">
                         <div>
-                          <strong>Your Entered Value:</strong> 
-                          <span style="font-family: var(--font-mono); font-weight: 700; color: ${q.isCorrect ? '#16a34a' : '#dc2626'};">
-                            ${q.userResponse !== null && q.userResponse !== '' ? q.userResponse : 'None (Unattempted)'}
-                          </span>
+                          Your Value: 
+                          <strong style="color: ${q.isCorrect ? '#2e7d32' : '#c62828'}; font-family: var(--font-mono);">
+                            ${q.userResponse !== null && q.userResponse !== '' ? q.userResponse : 'Unattempted'}
+                          </strong>
                         </div>
                         <div>
-                          <strong>Correct Official Value:</strong> 
-                          <span style="font-family: var(--font-mono); font-weight: 700; color: #16a34a;">
-                            ${q.correctAnswer}
-                          </span>
+                          Official Value: 
+                          <strong style="color: #2e7d32; font-family: var(--font-mono);">${q.correctAnswer}</strong>
                         </div>
                       </div>
                     `}
 
-                    <!-- Step-by-Step Solution -->
-                    <div class="explanation-box">
-                      <div class="explanation-title">
-                        <span>💡 Step-by-Step Solution & Concept:</span>
-                      </div>
-                      <div style="color: #1e293b;">
-                        ${renderMathInText(q.explanation)}
-                      </div>
+                    <!-- Explanation -->
+                    <div class="review-sol-box">
+                      <div style="font-weight: 700; color: #2e7d32; margin-bottom: 4px;">Solution:</div>
+                      <div>${renderMathInText(q.explanation)}</div>
                     </div>
                   </div>
                 `;
@@ -369,7 +289,6 @@ export function renderResultView(container, { attemptId, onRetakeTest, onBackToD
 
     container.innerHTML = html;
 
-    // Attach filter click events
     container.querySelectorAll('.status-filter').forEach(btn => {
       btn.addEventListener('click', () => {
         statusFilter = btn.getAttribute('data-status');
@@ -384,7 +303,6 @@ export function renderResultView(container, { attemptId, onRetakeTest, onBackToD
       });
     });
 
-    // Top action buttons
     container.querySelector('#res-back-btn')?.addEventListener('click', onBackToDashboard);
     container.querySelector('#res-retake-btn')?.addEventListener('click', () => {
       if (onRetakeTest) onRetakeTest(result.testId);
