@@ -1,0 +1,139 @@
+import fs from 'fs';
+import path from 'path';
+import sharp from 'sharp';
+
+const iconsDir = path.resolve('public/icons');
+if (!fs.existsSync(iconsDir)) {
+  fs.mkdirSync(iconsDir, { recursive: true });
+}
+
+// Crisp JEEReady vector logo with shield, atom orbit, delta and target
+const svgContent = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="50%" stop-color="#1e1b4b" />
+      <stop offset="100%" stop-color="#0284c7" />
+    </linearGradient>
+    <linearGradient id="primaryGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="50%" stop-color="#6366f1" />
+      <stop offset="100%" stop-color="#a855f7" />
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#22d3ee" />
+      <stop offset="100%" stop-color="#10b981" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="16" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Rounded App Background -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)" />
+
+  <!-- Subtle grid lines resembling CBT graph paper -->
+  <g opacity="0.08" stroke="#ffffff" stroke-width="1.5">
+    <line x1="64" y1="0" x2="64" y2="512" />
+    <line x1="128" y1="0" x2="128" y2="512" />
+    <line x1="192" y1="0" x2="192" y2="512" />
+    <line x1="256" y1="0" x2="256" y2="512" />
+    <line x1="320" y1="0" x2="320" y2="512" />
+    <line x1="384" y1="0" x2="384" y2="512" />
+    <line x1="448" y1="0" x2="448" y2="512" />
+    <line x1="0" y1="64" x2="512" y2="64" />
+    <line x1="0" y1="128" x2="512" y2="128" />
+    <line x1="0" y1="192" x2="512" y2="192" />
+    <line x1="0" y1="256" x2="512" y2="256" />
+    <line x1="0" y1="320" x2="512" y2="320" />
+    <line x1="0" y1="384" x2="512" y2="384" />
+    <line x1="0" y1="448" x2="512" y2="448" />
+  </g>
+
+  <!-- Outer Ring / Target -->
+  <circle cx="256" cy="240" r="170" fill="none" stroke="url(#primaryGrad)" stroke-width="6" opacity="0.6" stroke-dasharray="16 12" />
+  
+  <!-- Physics / Chem Orbit -->
+  <ellipse cx="256" cy="240" rx="145" ry="60" fill="none" stroke="#38bdf8" stroke-width="5" transform="rotate(-30 256 240)" opacity="0.75" />
+  <ellipse cx="256" cy="240" rx="145" ry="60" fill="none" stroke="#c084fc" stroke-width="5" transform="rotate(30 256 240)" opacity="0.75" />
+  
+  <!-- Orbital Nodes -->
+  <circle cx="140" cy="180" r="9" fill="#38bdf8" filter="url(#glow)" />
+  <circle cx="372" cy="300" r="9" fill="#a855f7" filter="url(#glow)" />
+
+  <!-- Shield Shape -->
+  <path d="M 256 110 L 370 170 V 270 C 370 345 256 400 256 400 C 256 400 142 345 142 270 V 170 Z" 
+        fill="#0f172a" stroke="url(#primaryGrad)" stroke-width="10" filter="url(#glow)" opacity="0.95" />
+
+  <!-- Target Inner Center -->
+  <circle cx="256" cy="240" r="42" fill="none" stroke="#22d3ee" stroke-width="4" stroke-dasharray="8 6" />
+
+  <!-- Bold Monogram: J & R interlocking with checkmark -->
+  <!-- Letter J -->
+  <path d="M 215 175 V 270 C 215 295 195 305 180 295" 
+        fill="none" stroke="#38bdf8" stroke-width="16" stroke-linecap="round" />
+
+  <!-- Letter R / Check Arrow -->
+  <path d="M 260 175 V 305 M 260 175 H 295 C 318 175 328 190 328 205 C 328 220 318 235 295 235 H 260 M 290 235 L 332 305" 
+        fill="none" stroke="#a855f7" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" />
+
+  <!-- Success Bullseye Dot -->
+  <circle cx="256" cy="240" r="10" fill="#10b981" filter="url(#glow)" />
+
+  <!-- Subtitle Pill -->
+  <rect x="136" y="420" width="240" height="42" rx="21" fill="#1e293b" stroke="#38bdf8" stroke-width="2" />
+  <text x="256" y="447" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="20" font-weight="800" fill="#f8fafc" text-anchor="middle" letter-spacing="4">JEEREADY</text>
+</svg>
+`;
+
+// Maskable version (safe-zone friendly)
+const svgMaskable = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="50%" stop-color="#1e1b4b" />
+      <stop offset="100%" stop-color="#0284c7" />
+    </linearGradient>
+    <linearGradient id="primaryGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="50%" stop-color="#6366f1" />
+      <stop offset="100%" stop-color="#a855f7" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#bgGrad)" />
+  <g transform="translate(51.2, 51.2) scale(0.8)">
+    <circle cx="256" cy="240" r="170" fill="none" stroke="url(#primaryGrad)" stroke-width="6" opacity="0.6" stroke-dasharray="16 12" />
+    <path d="M 256 110 L 370 170 V 270 C 370 345 256 400 256 400 C 256 400 142 345 142 270 V 170 Z" 
+          fill="#0f172a" stroke="url(#primaryGrad)" stroke-width="12" />
+    <circle cx="256" cy="240" r="42" fill="none" stroke="#22d3ee" stroke-width="5" stroke-dasharray="8 6" />
+    <path d="M 215 175 V 270 C 215 295 195 305 180 295" fill="none" stroke="#38bdf8" stroke-width="18" stroke-linecap="round" />
+    <path d="M 260 175 V 305 M 260 175 H 295 C 318 175 328 190 328 205 C 328 220 318 235 295 235 H 260 M 290 235 L 332 305" 
+          fill="none" stroke="#a855f7" stroke-width="18" stroke-linecap="round" stroke-linejoin="round" />
+    <circle cx="256" cy="240" r="12" fill="#10b981" />
+  </g>
+</svg>
+`;
+
+async function generate() {
+  fs.writeFileSync('public/favicon.svg', svgContent);
+  fs.writeFileSync('public/icons/icon.svg', svgContent);
+
+  const svgBuffer = Buffer.from(svgContent);
+  const maskableBuffer = Buffer.from(svgMaskable);
+
+  await sharp(svgBuffer).resize(192, 192).png().toFile('public/icons/icon-192.png');
+  await sharp(svgBuffer).resize(512, 512).png().toFile('public/icons/icon-512.png');
+  await sharp(svgBuffer).resize(180, 180).png().toFile('public/icons/apple-touch-icon.png');
+  await sharp(maskableBuffer).resize(512, 512).png().toFile('public/icons/icon-maskable-512.png');
+  await sharp(svgBuffer).resize(64, 64).png().toFile('public/favicon.png');
+
+  console.log('Successfully generated all PWA icons & favicons.');
+}
+
+generate().catch(err => {
+  console.error(err);
+  process.exit(1);
+});

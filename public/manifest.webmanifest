@@ -1,0 +1,58 @@
+{
+  "name": "JEEReady - JEE Main CBT Practice Arena",
+  "short_name": "JEEReady",
+  "description": "Authentic Computer-Based Test (CBT) practice platform for JEE Main with real exam-style question palette, timer, KaTeX math formulas, and instant analytics.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#1e1b4b",
+  "orientation": "any",
+  "categories": ["education", "utilities", "productivity"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Full Mock Test (75 Q)",
+      "short_name": "Full Mock",
+      "description": "Start complete 3-hour JEE Main 2026 practice paper",
+      "url": "/#exam?test=full-mock-1",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Physics Practice",
+      "short_name": "Physics",
+      "description": "25 Questions Physics Section Test",
+      "url": "/#exam?test=physics-test",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Quick Sprint Test",
+      "short_name": "Sprint Test",
+      "description": "15 Questions 30-minute rapid practice",
+      "url": "/#exam?test=sprint-test",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
