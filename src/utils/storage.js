@@ -1,9 +1,17 @@
 /**
- * Local persistence management for JEEReady
+ * Local persistence management for Exam Edge
  * Manages active exam attempts, completed test history, candidate profile, and settings
  */
 
 const STORAGE_KEYS = {
+  ACTIVE_EXAM: 'examedge_active_exam_v1',
+  COMPLETED_TESTS: 'examedge_completed_tests_v1',
+  PROFILE: 'examedge_candidate_profile_v1',
+  SETTINGS: 'examedge_user_settings_v1',
+  CUSTOM_CONFIG: 'examedge_exam_config_v1'
+};
+
+const LEGACY_STORAGE_KEYS = {
   ACTIVE_EXAM: 'jeeready_active_exam_v1',
   COMPLETED_TESTS: 'jeeready_completed_tests_v1',
   PROFILE: 'jeeready_candidate_profile_v1',
@@ -22,7 +30,7 @@ export const DEFAULT_PROFILE = {
 
 export const DEFAULT_SETTINGS = {
   soundEnabled: true,
-  theme: 'cbt-classic', // 'cbt-classic' (NTA authentic light) or 'cbt-dark' (eye-friendly dark mode)
+  theme: 'cbt-classic',
   timerAlertThresholdMinutes: 10,
   autoAdvanceOnSave: true
 };
@@ -31,7 +39,7 @@ export const Storage = {
   // --- Active Exam Persistence ---
   getActiveExam() {
     try {
-      const data = localStorage.getItem(STORAGE_KEYS.ACTIVE_EXAM);
+      const data = localStorage.getItem(STORAGE_KEYS.ACTIVE_EXAM) || localStorage.getItem(LEGACY_STORAGE_KEYS.ACTIVE_EXAM);
       return data ? JSON.parse(data) : null;
     } catch (e) {
       console.error('Error reading active exam from storage:', e);
@@ -43,6 +51,7 @@ export const Storage = {
     try {
       if (!examState) {
         localStorage.removeItem(STORAGE_KEYS.ACTIVE_EXAM);
+        localStorage.removeItem(LEGACY_STORAGE_KEYS.ACTIVE_EXAM);
         return;
       }
       localStorage.setItem(STORAGE_KEYS.ACTIVE_EXAM, JSON.stringify(examState));
@@ -54,6 +63,7 @@ export const Storage = {
   clearActiveExam() {
     try {
       localStorage.removeItem(STORAGE_KEYS.ACTIVE_EXAM);
+      localStorage.removeItem(LEGACY_STORAGE_KEYS.ACTIVE_EXAM);
     } catch (e) {
       console.error('Error clearing active exam:', e);
     }
@@ -62,7 +72,7 @@ export const Storage = {
   // --- Completed Test History ---
   getCompletedTests() {
     try {
-      const data = localStorage.getItem(STORAGE_KEYS.COMPLETED_TESTS);
+      const data = localStorage.getItem(STORAGE_KEYS.COMPLETED_TESTS) || localStorage.getItem(LEGACY_STORAGE_KEYS.COMPLETED_TESTS);
       return data ? JSON.parse(data) : [];
     } catch (e) {
       console.error('Error reading completed tests:', e);
@@ -78,12 +88,9 @@ export const Storage = {
   saveCompletedTest(testResult) {
     try {
       const list = this.getCompletedTests();
-      // Prepend so latest is first
       list.unshift(testResult);
-      // Keep up to 50 attempts
       const trimmed = list.slice(0, 50);
       localStorage.setItem(STORAGE_KEYS.COMPLETED_TESTS, JSON.stringify(trimmed));
-      // Clear active exam once completed
       this.clearActiveExam();
       return testResult;
     } catch (e) {
@@ -105,6 +112,8 @@ export const Storage = {
     try {
       localStorage.removeItem(STORAGE_KEYS.COMPLETED_TESTS);
       localStorage.removeItem(STORAGE_KEYS.ACTIVE_EXAM);
+      localStorage.removeItem(LEGACY_STORAGE_KEYS.COMPLETED_TESTS);
+      localStorage.removeItem(LEGACY_STORAGE_KEYS.ACTIVE_EXAM);
     } catch (e) {
       console.error('Error clearing history:', e);
     }
@@ -113,7 +122,7 @@ export const Storage = {
   // --- Profile ---
   getProfile() {
     try {
-      const data = localStorage.getItem(STORAGE_KEYS.PROFILE);
+      const data = localStorage.getItem(STORAGE_KEYS.PROFILE) || localStorage.getItem(LEGACY_STORAGE_KEYS.PROFILE);
       return data ? { ...DEFAULT_PROFILE, ...JSON.parse(data) } : DEFAULT_PROFILE;
     } catch (e) {
       return DEFAULT_PROFILE;
@@ -131,7 +140,7 @@ export const Storage = {
   // --- Settings ---
   getSettings() {
     try {
-      const data = localStorage.getItem(STORAGE_KEYS.SETTINGS);
+      const data = localStorage.getItem(STORAGE_KEYS.SETTINGS) || localStorage.getItem(LEGACY_STORAGE_KEYS.SETTINGS);
       return data ? { ...DEFAULT_SETTINGS, ...JSON.parse(data) } : DEFAULT_SETTINGS;
     } catch (e) {
       return DEFAULT_SETTINGS;

@@ -2,8 +2,8 @@ import { TEST_PRESETS } from '../data/questionBank.js';
 import { Storage } from '../utils/storage.js';
 
 /**
- * Clean, minimal DashboardView
- * Free of emojis, gradients, decorative glow effects, or promotional copy.
+ * Minimal, distraction-free DashboardView for Exam Edge
+ * Restrained typography, subtle borders, no promotional bloat or AI gradients.
  */
 export function renderDashboardView(container, { onStartTest, onResumeTest, onReviewAttempt }) {
   const profile = Storage.getProfile();
@@ -28,14 +28,24 @@ export function renderDashboardView(container, { onStartTest, onResumeTest, onRe
   const overallAccuracy = totalAttempted > 0 ? Math.round((totalCorrect / totalAttempted) * 100) : 0;
 
   const html = `
-    <!-- Top Header Bar -->
+    <!-- Top Navigation Bar -->
     <header class="dash-header-bar">
-      <a href="#dashboard" class="dash-brand">
-        JEEReady | Practice Portal
-      </a>
+      <div class="dash-header-inner">
+        <a href="#dashboard" class="dash-brand">
+          <span class="brand-edge-mark">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="4 17 10 11 4 5"></polyline>
+              <line x1="12" y1="19" x2="20" y2="19"></line>
+            </svg>
+          </span>
+          <span class="dash-brand-title">Exam Edge</span>
+          <span class="dash-brand-pill">JEE 2026</span>
+        </a>
 
-      <div style="font-size: 13px; color: #e2e8f0;">
-        <span>${profile.name.replace('Candidate: ', '')}</span>
+        <div class="dash-user-meta">
+          <span class="dash-user-label">Candidate</span>
+          <span class="dash-user-name">${profile.name.replace('Candidate: ', '')}</span>
+        </div>
       </div>
     </header>
 
@@ -43,19 +53,18 @@ export function renderDashboardView(container, { onStartTest, onResumeTest, onRe
       <!-- Active Exam Resume Banner if available -->
       ${activeExam ? `
         <div class="dash-resume-card">
-          <div>
-            <div style="font-weight: 700; font-size: 14px; color: #1e3a8a;">
-              Incomplete Test: ${activeExam.testTitle}
-            </div>
-            <div style="font-size: 12px; color: #475569; margin-top: 2px;">
-              ${Math.floor(activeExam.timeRemaining / 60)} minutes remaining. Saved automatically.
+          <div class="dash-resume-info">
+            <div class="dash-resume-tag">In-Progress Session</div>
+            <div class="dash-resume-title">${activeExam.testTitle}</div>
+            <div class="dash-resume-sub">
+              ${Math.floor(activeExam.timeRemaining / 60)} minutes remaining &bull; Automatically saved
             </div>
           </div>
-          <div style="display: flex; gap: 8px;">
-            <button id="resume-exam-btn" class="btn-cbt-primary" style="padding: 6px 14px;">
+          <div class="dash-resume-actions">
+            <button id="resume-exam-btn" class="btn-cbt-primary">
               Resume Test
             </button>
-            <button id="discard-exam-btn" class="btn-cbt-default" style="padding: 6px 10px; font-size: 12px;">
+            <button id="discard-exam-btn" class="btn-cbt-ghost">
               Discard
             </button>
           </div>
@@ -63,116 +72,139 @@ export function renderDashboardView(container, { onStartTest, onResumeTest, onRe
       ` : ''}
 
       <!-- Performance Summary Stats -->
-      <div class="dash-stats-row">
+      <section class="dash-stats-section">
         <div class="dash-stat-box">
+          <div class="dash-stat-label">Tests Taken</div>
           <div class="dash-stat-val">${totalAttempts}</div>
-          <div class="dash-stat-label">Tests Attempted</div>
         </div>
         <div class="dash-stat-box">
-          <div class="dash-stat-val">${avgScore}</div>
-          <div class="dash-stat-label">Average Score / 300</div>
+          <div class="dash-stat-label">Average Score</div>
+          <div class="dash-stat-val">${avgScore} <span class="dash-stat-denom">/ 300</span></div>
         </div>
         <div class="dash-stat-box">
-          <div class="dash-stat-val">${topScore}</div>
-          <div class="dash-stat-label">Highest Score</div>
+          <div class="dash-stat-label">Top Score</div>
+          <div class="dash-stat-val">${topScore} <span class="dash-stat-denom">/ 300</span></div>
         </div>
         <div class="dash-stat-box">
-          <div class="dash-stat-val">${overallAccuracy}%</div>
-          <div class="dash-stat-label">Accuracy Rate</div>
+          <div class="dash-stat-label">Accuracy</div>
+          <div class="dash-stat-val">${overallAccuracy}<span class="dash-stat-denom">%</span></div>
         </div>
-      </div>
+      </section>
 
       <!-- Practice Tests Section -->
-      <div class="dash-section-heading">Available Practice Tests</div>
+      <section class="dash-section">
+        <div class="dash-section-header">
+          <div>
+            <h2 class="dash-section-title">Available Practice Tests</h2>
+            <p class="dash-section-desc">Authentic CBT simulation following official NTA 2026 paper pattern.</p>
+          </div>
+        </div>
 
-      <div class="dash-tests-grid">
-        ${TEST_PRESETS.map((test) => `
-          <div class="dash-test-item">
-            <div>
-              <div class="dash-test-name">${test.title}</div>
-              <div style="font-size: 12px; color: #64748b; line-height: 1.4;">${test.description}</div>
-            </div>
-
-            <div>
-              <div class="dash-test-meta">
-                <span>Duration: <strong>${test.durationMinutes} min</strong></span>
-                <span>Questions: <strong>${test.totalQuestions}</strong></span>
-                <span>Marks: <strong>${test.maxMarks}</strong></span>
+        <div class="dash-tests-grid">
+          ${TEST_PRESETS.map((test) => `
+            <div class="dash-test-card">
+              <div class="dash-test-header">
+                <span class="dash-test-badge ${test.category === 'full-mock' ? 'badge-primary' : 'badge-neutral'}">
+                  ${test.category === 'full-mock' ? 'Full Mock' : test.category === 'subject' ? 'Subject Test' : 'Sprint'}
+                </span>
+                <span class="dash-test-timing">${test.durationMinutes} mins</span>
               </div>
 
-              <button class="btn-cbt-primary start-test-btn" data-test-id="${test.id}" style="width: 100%;">
-                Start Practice Test
-              </button>
+              <div class="dash-test-body">
+                <h3 class="dash-test-name">${test.title}</h3>
+                <p class="dash-test-desc">${test.description}</p>
+              </div>
+
+              <div class="dash-test-footer">
+                <div class="dash-test-specs">
+                  <span><strong>${test.totalQuestions}</strong> questions</span>
+                  <span>&bull;</span>
+                  <span><strong>${test.maxMarks}</strong> marks</span>
+                </div>
+                <button class="btn-cbt-primary start-test-btn" data-test-id="${test.id}">
+                  Start Test
+                </button>
+              </div>
             </div>
-          </div>
-        `).join('')}
-      </div>
+          `).join('')}
+        </div>
+      </section>
 
       <!-- Recent Test Attempts History -->
-      <div class="dash-section-heading" style="display: flex; justify-content: space-between; align-items: center;">
-        <span>Recent Test Attempts</span>
+      <section class="dash-section">
+        <div class="dash-section-header" style="justify-content: space-between; align-items: baseline;">
+          <div>
+            <h2 class="dash-section-title">Attempt History</h2>
+            <p class="dash-section-desc">Past performance reviews and solution breakdowns.</p>
+          </div>
+          ${completedTests.length > 0 ? `
+            <button id="clear-history-btn" class="btn-cbt-ghost-danger">
+              Clear History
+            </button>
+          ` : ''}
+        </div>
+
         ${completedTests.length > 0 ? `
-          <button id="clear-history-btn" class="btn-cbt-default" style="font-size: 11px; padding: 2px 8px; color: #c62828;">
-            Clear History
-          </button>
-        ` : ''}
-      </div>
+          <div class="dash-table-wrapper">
+            <table class="dash-history-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Test Title</th>
+                  <th>Score</th>
+                  <th>Accuracy</th>
+                  <th>Subject Breakdown</th>
+                  <th>Time Taken</th>
+                  <th style="text-align: right;">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${completedTests.map((attempt) => {
+                  const dateStr = new Date(attempt.completedAt).toLocaleDateString('en-IN', {
+                    day: 'numeric',
+                    month: 'short',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  });
+                  const pScore = attempt.subjectBreakdown?.physics?.score ?? '-';
+                  const cScore = attempt.subjectBreakdown?.chemistry?.score ?? '-';
+                  const mScore = attempt.subjectBreakdown?.mathematics?.score ?? '-';
+                  const minsTaken = Math.floor(attempt.timeTakenSeconds / 60);
 
-      ${completedTests.length > 0 ? `
-        <div style="overflow-x: auto;">
-          <table class="dash-history-table">
-            <thead>
-              <tr>
-                <th>Date &amp; Time</th>
-                <th>Test Title</th>
-                <th>Score</th>
-                <th>Accuracy</th>
-                <th>Breakdown (P / C / M)</th>
-                <th>Time Taken</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${completedTests.map((attempt) => {
-                const dateStr = new Date(attempt.completedAt).toLocaleDateString('en-IN', {
-                  day: 'numeric',
-                  month: 'short',
-                  hour: '2-digit',
-                  minute: '2-digit'
-                });
-                const pScore = attempt.subjectBreakdown?.physics?.score ?? '-';
-                const cScore = attempt.subjectBreakdown?.chemistry?.score ?? '-';
-                const mScore = attempt.subjectBreakdown?.mathematics?.score ?? '-';
-                const minsTaken = Math.floor(attempt.timeTakenSeconds / 60);
-
-                return `
-                  <tr>
-                    <td style="color: #64748b; font-size: 12px;">${dateStr}</td>
-                    <td><strong>${attempt.testTitle}</strong></td>
-                    <td>
-                      <strong>${attempt.totalScore}</strong> / ${attempt.maxScore}
-                    </td>
-                    <td>${attempt.accuracy}%</td>
-                    <td style="font-family: var(--font-mono); font-size: 12px;">
-                      P: ${pScore} | C: ${cScore} | M: ${mScore}
-                    </td>
-                    <td>${minsTaken} mins</td>
-                    <td>
-                      <button class="btn-cbt-default review-attempt-btn" data-attempt-id="${attempt.attemptId}" style="padding: 2px 8px; font-size: 12px;">
-                        Review Solutions
-                      </button>
-                    </td>
-                  </tr>
-                `;
-              }).join('')}
-            </tbody>
-          </table>
-        </div>
-      ` : `
-        <div style="text-align: center; padding: 24px; color: #64748b; font-size: 13px; background: #ffffff; border: 1px solid var(--cbt-border); border-radius: 3px;">
-          No completed tests yet. Start a practice test above to view detailed score analysis and step-by-step solutions.
-        </div>
-      `}
+                  return `
+                    <tr>
+                      <td class="cell-date">${dateStr}</td>
+                      <td class="cell-title">${attempt.testTitle}</td>
+                      <td class="cell-score">
+                        <span class="score-highlight">${attempt.totalScore}</span>
+                        <span class="score-denom">/${attempt.maxScore}</span>
+                      </td>
+                      <td class="cell-acc">${attempt.accuracy}%</td>
+                      <td class="cell-mono">
+                        <span>P: ${pScore}</span>
+                        <span class="sep">&bull;</span>
+                        <span>C: ${cScore}</span>
+                        <span class="sep">&bull;</span>
+                        <span>M: ${mScore}</span>
+                      </td>
+                      <td class="cell-time">${minsTaken}m</td>
+                      <td style="text-align: right;">
+                        <button class="btn-cbt-default review-attempt-btn" data-attempt-id="${attempt.attemptId}">
+                          Review
+                        </button>
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        ` : `
+          <div class="dash-empty-state">
+            <p>No completed tests yet. Start a practice test above to view score analytics and step-by-step solutions.</p>
+          </div>
+        `}
+      </section>
     </main>
   `;
 
@@ -204,7 +236,7 @@ export function renderDashboardView(container, { onStartTest, onResumeTest, onRe
   });
 
   container.querySelector('#clear-history-btn')?.addEventListener('click', () => {
-    if (confirm('Clear history?')) {
+    if (confirm('Clear all test attempt history?')) {
       Storage.clearAllHistory();
       renderDashboardView(container, { onStartTest, onResumeTest, onReviewAttempt });
     }

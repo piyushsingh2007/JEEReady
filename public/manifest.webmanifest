@@ -1,12 +1,12 @@
 {
-  "name": "JEEReady - JEE Main CBT Practice Arena",
-  "short_name": "JEEReady",
-  "description": "Authentic Computer-Based Test (CBT) practice platform for JEE Main with real exam-style question palette, timer, KaTeX math formulas, and instant analytics.",
+  "name": "Exam Edge - JEE Main CBT Practice",
+  "short_name": "Exam Edge",
+  "description": "Minimal, authentic Computer-Based Test (CBT) practice platform for JEE Main with real exam question palette, countdown timer, KaTeX math rendering, and instant performance analysis.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "background_color": "#0f172a",
-  "theme_color": "#1e1b4b",
+  "theme_color": "#0f172a",
   "orientation": "any",
   "categories": ["education", "utilities", "productivity"],
   "icons": [
@@ -44,14 +44,14 @@
       "name": "Physics Practice",
       "short_name": "Physics",
       "description": "25 Questions Physics Section Test",
-      "url": "/#exam?test=physics-test",
+      "url": "/#exam?test=physics-mastery",
       "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Quick Sprint Test",
       "short_name": "Sprint Test",
       "description": "15 Questions 30-minute rapid practice",
-      "url": "/#exam?test=sprint-test",
+      "url": "/#exam?test=sprint-15",
       "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     }
   ]

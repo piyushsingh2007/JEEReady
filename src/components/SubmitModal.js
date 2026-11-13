@@ -57,7 +57,7 @@ export function renderSubmitModal(container, {
           <button class="cbt-modal-close-btn" id="submit-modal-close-btn">&times;</button>
         </div>
         <div class="cbt-modal-body">
-          <div style="background: #e3f2fd; border-left: 3px solid #1976d2; padding: 8px 12px; margin-bottom: 12px; font-size: 13px; color: #0d47a1;">
+          <div class="cbt-modal-notice">
             Time Remaining: <strong>${timeRemainingFormatted}</strong>. Once submitted, answers cannot be edited.
           </div>
 

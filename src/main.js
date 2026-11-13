@@ -24,7 +24,7 @@ if ('serviceWorker' in navigator && !window.location.hostname.includes('localhos
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
       .then((reg) => {
-        console.log('JEEReady ServiceWorker registered with scope:', reg.scope);
+        console.log('Exam Edge ServiceWorker registered with scope:', reg.scope);
       })
       .catch((err) => {
         console.warn('ServiceWorker registration skipped or failed:', err);
@@ -34,7 +34,7 @@ if ('serviceWorker' in navigator && !window.location.hostname.includes('localhos
   // Also register on local dev/preview
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
-      .then((reg) => console.log('JEEReady SW registered (local):', reg.scope))
+      .then((reg) => console.log('Exam Edge SW registered (local):', reg.scope))
       .catch((e) => console.log('SW registration note:', e.message));
   });
 }

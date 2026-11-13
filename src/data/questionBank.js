@@ -1,5 +1,5 @@
 /**
- * JEEReady Question Bank
+ * Exam Edge Question Bank
  * Structured question bank supporting JEE Main 2026 Paper 1 pattern:
  * - 75 Questions Total: 25 Physics, 25 Chemistry, 25 Mathematics
  * - Each subject has Section A (20 MCQs) and Section B (5 Numerical-Answer questions)
@@ -466,7 +466,7 @@ export const RAW_QUESTION_BANK = [
     topic: 'Atomic Physics',
     difficulty: 'Moderate',
     isSample: true,
-    questionText: 'The wavelength of the first line of the Lyman series for a hydrogen atom is $1215\\text{ \\AA}$. The wavelength of the first line of the Lyman series for a singly ionized helium ion ($\text{He}^+, Z = 2$) is $\\text{\\AA}$. (Give your answer rounded to the nearest integer)',
+    questionText: 'The wavelength of the first line of the Lyman series for a hydrogen atom is $1215\\text{ \\AA}$. The wavelength of the first line of the Lyman series for a singly ionized helium ion ($\\text{He}^+, Z = 2$) is $\\text{\\AA}$. (Give your answer rounded to the nearest integer)',
     correctAnswer: 304,
     acceptableRange: [303, 305],
     explanation: 'Wave number for hydrogen-like ions is $\\frac{1}{\\lambda} = R Z^2 \\left(\\frac{1}{1^2} - \\frac{1}{2^2}\\right)$. Hence $\\lambda \\propto \\frac{1}{Z^2}$. For $\\text{He}^+$, $Z = 2$: $\\lambda_{\\text{He}^+} = \\frac{\\lambda_H}{2^2} = \\frac{1215}{4} = 303.75\\text{ \\AA} \\approx 304\\text{ \\AA}$.'

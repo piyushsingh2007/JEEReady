@@ -2,17 +2,18 @@ import { renderMathInText } from '../utils/mathRenderer.js';
 import { Storage } from '../utils/storage.js';
 
 /**
- * Clean, minimal ResultView
- * Accurate scorecard, subject performance, and question-by-question review with KaTeX solutions.
+ * Minimal ResultView for Exam Edge
+ * Clear performance metrics, subject breakdown, and step-by-step solutions.
  */
 export function renderResultView(container, { attemptId, onRetakeTest, onBackToDashboard }) {
   const result = Storage.getCompletedTestById(attemptId) || Storage.getCompletedTests()[0];
 
   if (!result) {
     container.innerHTML = `
-      <div style="text-align: center; padding: 40px 16px;">
-        <h3>No Test Result Found</h3>
-        <button class="btn-cbt-primary" id="err-back-dash-btn" style="margin-top: 12px;">Return to Dashboard</button>
+      <div style="text-align: center; padding: 60px 16px;">
+        <h3 style="font-size: 16px; font-weight: 600; color: #0f172a;">No Test Result Found</h3>
+        <p style="color: #64748b; font-size: 13px; margin: 8px 0 16px;">The requested attempt could not be loaded.</p>
+        <button class="btn-cbt-primary" id="err-back-dash-btn">Return to Dashboard</button>
       </div>
     `;
     container.querySelector('#err-back-dash-btn')?.addEventListener('click', onBackToDashboard);
@@ -48,14 +49,22 @@ export function renderResultView(container, { attemptId, onRetakeTest, onBackToD
       <!-- Top Bar -->
       <header class="cbt-top-header">
         <div class="cbt-top-title">
-          <span>JEEReady - Performance Report</span>
+          <span class="brand-edge-mark">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="4 17 10 11 4 5"></polyline>
+              <line x1="12" y1="19" x2="20" y2="19"></line>
+            </svg>
+          </span>
+          <span class="brand-name-text">Exam Edge</span>
+          <span class="cbt-top-sep">/</span>
+          <span class="cbt-test-name">Performance Report</span>
         </div>
         <div style="display: flex; gap: 8px;">
           <button id="res-print-btn" class="cbt-top-link-btn">
-            Print Report
+            Print
           </button>
-          <button id="res-back-btn" class="cbt-top-link-btn" style="color: #38bdf8;">
-            Back to Dashboard
+          <button id="res-back-btn" class="cbt-top-link-btn" style="color: #93c5fd;">
+            Dashboard
           </button>
         </div>
       </header>
@@ -63,125 +72,128 @@ export function renderResultView(container, { attemptId, onRetakeTest, onBackToD
       <main class="results-panel">
         <!-- Hero Box -->
         <div class="results-hero-box">
-          <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
+          <div class="results-hero-top">
             <div>
-              <h1 style="font-size: 18px; font-weight: 700; color: #111827;">${result.testTitle}</h1>
-              <div style="font-size: 12px; color: #64748b; margin-top: 2px;">
-                Attempted on ${new Date(result.completedAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
+              <h1 class="results-title">${result.testTitle}</h1>
+              <div class="results-timestamp">
+                Completed on ${new Date(result.completedAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
               </div>
             </div>
 
-            <div>
-              <button id="res-retake-btn" class="btn-cbt-default" style="font-size: 12px; padding: 4px 10px;">
-                Retake Test
-              </button>
-            </div>
+            <button id="res-retake-btn" class="btn-cbt-default">
+              Retake Test
+            </button>
           </div>
 
           <!-- Score Metrics Grid -->
           <div class="results-score-grid">
             <div class="score-box">
-              <div class="score-num">${result.totalScore} <span style="font-size: 13px; color: #64748b; font-weight: 500;">/ ${result.maxScore}</span></div>
               <div class="score-lbl">Total Score</div>
+              <div class="score-num">${result.totalScore} <span class="score-denom">/ ${result.maxScore}</span></div>
             </div>
 
             <div class="score-box">
-              <div class="score-num" style="color: #2e7d32;">${result.accuracy}%</div>
               <div class="score-lbl">Accuracy</div>
+              <div class="score-num accent-green">${result.accuracy}%</div>
             </div>
 
             <div class="score-box">
-              <div class="score-num" style="color: #0288d1;">${estPercentile}</div>
-              <div class="score-lbl">Estimated Percentile</div>
+              <div class="score-lbl">Est. Percentile</div>
+              <div class="score-num accent-blue">${estPercentile}</div>
             </div>
 
             <div class="score-box">
-              <div class="score-num" style="font-size: 1.3rem;">${timeTakenMins}m ${timeTakenSecs}s</div>
               <div class="score-lbl">Time Taken</div>
+              <div class="score-num" style="font-size: 1.4rem;">${timeTakenMins}m ${timeTakenSecs}s</div>
             </div>
           </div>
 
-          <div style="display: flex; gap: 16px; margin-top: 14px; padding-top: 10px; border-top: 1px dashed var(--cbt-border-light); font-size: 12px; color: #475569; flex-wrap: wrap;">
-            <span>Correct: <strong>${result.correctCount}</strong> (+${result.correctCount * 4} Marks)</span>
-            <span>Incorrect: <strong>${result.incorrectCount}</strong> (-${result.incorrectCount} Marks)</span>
+          <div class="results-summary-strip">
+            <span>Correct: <strong>${result.correctCount}</strong> (+${result.correctCount * 4})</span>
+            <span>&bull;</span>
+            <span>Incorrect: <strong>${result.incorrectCount}</strong> (-${result.incorrectCount})</span>
+            <span>&bull;</span>
             <span>Unanswered: <strong>${result.unansweredCount}</strong></span>
-            <span>Attempted: <strong>${result.correctCount + result.incorrectCount}</strong> of ${result.questions.length}</span>
+            <span>&bull;</span>
+            <span>Attempted: <strong>${result.correctCount + result.incorrectCount}</strong> / ${result.questions.length}</span>
           </div>
         </div>
 
         <!-- Subject Breakdown Table -->
-        <div style="margin-bottom: 20px;">
-          <h2 style="font-size: 14px; font-weight: 700; margin-bottom: 8px; color: #111827;">Subject-wise Breakdown</h2>
-          <table class="cbt-summary-table">
-            <thead>
-              <tr>
-                <th>Subject</th>
-                <th>Score</th>
-                <th>Correct</th>
-                <th>Incorrect</th>
-                <th>Unanswered</th>
-                <th>Accuracy</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${Object.keys(result.subjectBreakdown).map(sub => {
-                const data = result.subjectBreakdown[sub];
-                return `
-                  <tr>
-                    <td>${subjectTitles[sub] || sub}</td>
-                    <td style="font-weight: 700; color: var(--cbt-blue-primary);">${data.score} / ${data.maxScore}</td>
-                    <td style="color: #2e7d32; font-weight: 600;">${data.correct}</td>
-                    <td style="color: #c62828; font-weight: 600;">${data.incorrect}</td>
-                    <td style="color: #6c757d;">${data.unanswered}</td>
-                    <td><strong>${data.accuracy}%</strong></td>
-                  </tr>
-                `;
-              }).join('')}
-            </tbody>
-          </table>
-        </div>
+        <section class="results-section">
+          <h2 class="results-section-heading">Subject Performance</h2>
+          <div class="dash-table-wrapper">
+            <table class="cbt-summary-table">
+              <thead>
+                <tr>
+                  <th>Subject</th>
+                  <th>Score</th>
+                  <th>Correct</th>
+                  <th>Incorrect</th>
+                  <th>Unanswered</th>
+                  <th>Accuracy</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${Object.keys(result.subjectBreakdown).map(sub => {
+                  const data = result.subjectBreakdown[sub];
+                  return `
+                    <tr>
+                      <td style="font-weight: 600;">${subjectTitles[sub] || sub}</td>
+                      <td style="font-weight: 700; color: #0f172a;">${data.score} / ${data.maxScore}</td>
+                      <td style="color: #16a34a; font-weight: 600;">${data.correct}</td>
+                      <td style="color: #dc2626; font-weight: 600;">${data.incorrect}</td>
+                      <td style="color: #64748b;">${data.unanswered}</td>
+                      <td><strong>${data.accuracy}%</strong></td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        </section>
 
         <!-- Filterable Question Review -->
-        <div>
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
-            <h2 style="font-size: 14px; font-weight: 700; color: #111827;">
-              Question-by-Question Solutions
+        <section class="results-section">
+          <div class="review-filter-bar">
+            <h2 class="results-section-heading" style="margin-bottom: 0;">
+              Solutions &amp; Review
             </h2>
 
-            <div style="display: flex; gap: 4px; flex-wrap: wrap;">
-              <button class="btn-cbt-default status-filter ${statusFilter === 'all' ? 'btn-cbt-primary' : ''}" data-status="all" style="font-size: 11px; padding: 3px 8px;">
+            <div class="review-status-chips">
+              <button class="review-chip ${statusFilter === 'all' ? 'active' : ''}" data-status="all">
                 All (${result.questions.length})
               </button>
-              <button class="btn-cbt-default status-filter ${statusFilter === 'correct' ? 'btn-cbt-primary' : ''}" data-status="correct" style="font-size: 11px; padding: 3px 8px;">
+              <button class="review-chip ${statusFilter === 'correct' ? 'active' : ''}" data-status="correct">
                 Correct (${result.correctCount})
               </button>
-              <button class="btn-cbt-default status-filter ${statusFilter === 'incorrect' ? 'btn-cbt-primary' : ''}" data-status="incorrect" style="font-size: 11px; padding: 3px 8px;">
+              <button class="review-chip ${statusFilter === 'incorrect' ? 'active' : ''}" data-status="incorrect">
                 Incorrect (${result.incorrectCount})
               </button>
-              <button class="btn-cbt-default status-filter ${statusFilter === 'unanswered' ? 'btn-cbt-primary' : ''}" data-status="unanswered" style="font-size: 11px; padding: 3px 8px;">
+              <button class="review-chip ${statusFilter === 'unanswered' ? 'active' : ''}" data-status="unanswered">
                 Unanswered (${result.unansweredCount})
               </button>
             </div>
           </div>
 
           <!-- Subject sub-filters -->
-          <div style="display: flex; gap: 4px; margin-bottom: 14px;">
-            <button class="btn-cbt-default subject-filter ${subjectFilter === 'all' ? 'btn-cbt-primary' : ''}" data-subject="all" style="font-size: 11px; padding: 2px 7px;">
+          <div class="review-subject-chips">
+            <button class="review-subchip ${subjectFilter === 'all' ? 'active' : ''}" data-subject="all">
               All Subjects
             </button>
-            <button class="btn-cbt-default subject-filter ${subjectFilter === 'physics' ? 'btn-cbt-primary' : ''}" data-subject="physics" style="font-size: 11px; padding: 2px 7px;">
+            <button class="review-subchip ${subjectFilter === 'physics' ? 'active' : ''}" data-subject="physics">
               Physics
             </button>
-            <button class="btn-cbt-default subject-filter ${subjectFilter === 'chemistry' ? 'btn-cbt-primary' : ''}" data-subject="chemistry" style="font-size: 11px; padding: 2px 7px;">
+            <button class="review-subchip ${subjectFilter === 'chemistry' ? 'active' : ''}" data-subject="chemistry">
               Chemistry
             </button>
-            <button class="btn-cbt-default subject-filter ${subjectFilter === 'mathematics' ? 'btn-cbt-primary' : ''}" data-subject="mathematics" style="font-size: 11px; padding: 2px 7px;">
+            <button class="review-subchip ${subjectFilter === 'mathematics' ? 'active' : ''}" data-subject="mathematics">
               Mathematics
             </button>
           </div>
 
           <!-- Question Cards -->
-          <div>
+          <div class="review-list">
             ${(() => {
               const filtered = result.questions.filter(q => {
                 if (subjectFilter !== 'all' && q.subject !== subjectFilter) return false;
@@ -192,111 +204,110 @@ export function renderResultView(container, { attemptId, onRetakeTest, onBackToD
               });
 
               if (filtered.length === 0) {
-                return '<div style="text-align: center; padding: 24px; color: #6c757d;">No questions match the selected filter.</div>';
+                return '<div class="dash-empty-state"><p>No questions match the selected filter.</p></div>';
               }
 
               return filtered.map(q => {
                 const isMcq = q.type === 'mcq';
+                let statusBadgeClass = 'badge-unanswered';
                 let statusText = 'Unanswered (0 Marks)';
-                let statusColor = '#6c757d';
                 if (q.isAttempted) {
                   if (q.isCorrect) {
+                    statusBadgeClass = 'badge-correct';
                     statusText = 'Correct (+4 Marks)';
-                    statusColor = '#2e7d32';
                   } else {
+                    statusBadgeClass = 'badge-incorrect';
                     statusText = 'Incorrect (-1 Mark)';
-                    statusColor = '#c62828';
                   }
                 }
 
                 return `
                   <div class="review-item-card" id="q-review-${q.questionNumber}">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px solid var(--cbt-border-light); padding-bottom: 6px;">
-                      <div>
-                        <strong>Q.${q.questionNumber}</strong> | 
-                        <span style="color: #6c757d; font-size: 12px;">
-                          ${q.subject.toUpperCase()} &bull; Section ${q.section} (${isMcq ? 'MCQ Single' : 'Numeric'}) &bull; ${q.topic || ''}
+                    <div class="review-card-header">
+                      <div class="review-card-meta">
+                        <strong class="review-q-num">Q.${q.questionNumber}</strong>
+                        <span class="review-q-sub">
+                          ${q.subject.toUpperCase()} &bull; Section ${q.section} (${isMcq ? 'MCQ Single' : 'Numeric'}) ${q.topic ? `&bull; ${q.topic}` : ''}
                         </span>
                       </div>
-                      <div style="font-weight: 700; font-size: 12px; color: ${statusColor};">
+                      <span class="review-status-tag ${statusBadgeClass}">
                         ${statusText}
-                      </div>
+                      </span>
                     </div>
 
-                    <div style="font-size: 13px; line-height: 1.6; margin-bottom: 10px;">
+                    <div class="review-q-text">
                       ${renderMathInText(q.questionText)}
                     </div>
 
                     ${isMcq ? `
-                      <div style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px;">
+                      <div class="review-options-list">
                         ${q.options.map((opt, oIdx) => {
                           const isCorrectOpt = oIdx === q.correctAnswer;
                           const isUserOpt = oIdx === q.userResponse;
-                          let bg = '#ffffff';
-                          let border = '#e5e7eb';
+                          let optClass = 'opt-default';
                           let tag = '';
 
                           if (isCorrectOpt) {
-                            bg = '#f0fdf4';
-                            border = '#86efac';
-                            tag = '<span style="color: #2e7d32; font-weight: 700; margin-left: auto; font-size: 11px;">[Correct Answer]</span>';
+                            optClass = 'opt-correct';
+                            tag = '<span class="opt-tag tag-green">Correct Answer</span>';
                           }
                           if (isUserOpt && !isCorrectOpt) {
-                            bg = '#fef2f2';
-                            border = '#fca5a5';
-                            tag = '<span style="color: #c62828; font-weight: 700; margin-left: auto; font-size: 11px;">[Your Choice - Incorrect]</span>';
+                            optClass = 'opt-incorrect';
+                            tag = '<span class="opt-tag tag-red">Your Choice (Incorrect)</span>';
                           } else if (isUserOpt && isCorrectOpt) {
-                            tag = '<span style="color: #2e7d32; font-weight: 700; margin-left: auto; font-size: 11px;">[Your Choice - Correct]</span>';
+                            tag = '<span class="opt-tag tag-green">Your Choice (Correct)</span>';
                           }
 
                           return `
-                            <div style="display: flex; align-items: center; gap: 8px; padding: 5px 10px; border: 1px solid ${border}; border-radius: 2px; background: ${bg}; font-size: 13px;">
-                              <strong style="color: #6b7280; font-size: 12px;">(${String.fromCharCode(65 + oIdx)})</strong>
-                              <div>${renderMathInText(opt)}</div>
+                            <div class="review-opt-row ${optClass}">
+                              <span class="opt-letter">(${String.fromCharCode(65 + oIdx)})</span>
+                              <div class="opt-text">${renderMathInText(opt)}</div>
                               ${tag}
                             </div>
                           `;
                         }).join('')}
                       </div>
                     ` : `
-                      <div style="background: #f8fafc; border: 1px solid var(--cbt-border); padding: 8px 12px; font-size: 12px; margin-bottom: 10px; display: flex; justify-content: space-between;">
+                      <div class="review-numeric-summary">
                         <div>
-                          Your Value: 
-                          <strong style="color: ${q.isCorrect ? '#2e7d32' : '#c62828'}; font-family: var(--font-mono);">
+                          <span style="color: #64748b;">Your Value:</span>
+                          <strong class="${q.isCorrect ? 'text-green' : 'text-red'}" style="font-family: var(--font-mono); margin-left: 6px;">
                             ${q.userResponse !== null && q.userResponse !== '' ? q.userResponse : 'Unattempted'}
                           </strong>
                         </div>
                         <div>
-                          Official Value: 
-                          <strong style="color: #2e7d32; font-family: var(--font-mono);">${q.correctAnswer}</strong>
+                          <span style="color: #64748b;">Official Value:</span>
+                          <strong class="text-green" style="font-family: var(--font-mono); margin-left: 6px;">
+                            ${q.correctAnswer}
+                          </strong>
                         </div>
                       </div>
                     `}
 
                     <!-- Explanation -->
                     <div class="review-sol-box">
-                      <div style="font-weight: 700; color: #2e7d32; margin-bottom: 4px;">Solution:</div>
-                      <div>${renderMathInText(q.explanation)}</div>
+                      <div class="review-sol-label">Step-by-step Solution:</div>
+                      <div class="review-sol-content">${renderMathInText(q.explanation)}</div>
                     </div>
                   </div>
                 `;
               }).join('');
             })()}
           </div>
-        </div>
+        </section>
       </main>
     `;
 
     container.innerHTML = html;
 
-    container.querySelectorAll('.status-filter').forEach(btn => {
+    container.querySelectorAll('.review-chip').forEach(btn => {
       btn.addEventListener('click', () => {
         statusFilter = btn.getAttribute('data-status');
         renderContent();
       });
     });
 
-    container.querySelectorAll('.subject-filter').forEach(btn => {
+    container.querySelectorAll('.review-subchip').forEach(btn => {
       btn.addEventListener('click', () => {
         subjectFilter = btn.getAttribute('data-subject');
         renderContent();

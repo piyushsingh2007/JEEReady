@@ -1,4 +1,4 @@
-const CACHE_NAME = 'jeeready-v1.0.0';
+const CACHE_NAME = 'exam-edge-v1.0.0';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
